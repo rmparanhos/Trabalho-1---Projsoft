@@ -13,7 +13,7 @@ public class JPAUtil
 			new ThreadLocal<EntityManager>();
 	private static final ThreadLocal<EntityTransaction> threadTransaction = 
 			new ThreadLocal<EntityTransaction>();
-
+	private static int numTxs;
 	static 
 	{	try
 		{	emf = Persistence.createEntityManagerFactory("exercicio");
@@ -34,6 +34,7 @@ public class JPAUtil
 		{	if (tx == null) 
 			{	tx = getEntityManager().getTransaction();
 				tx.begin();
+				numTxs += 1;
 				threadTransaction.set(tx);
 				//System.out.println("Criou transacao");
 			}
@@ -67,9 +68,13 @@ public class JPAUtil
 	public static void commitTransaction() 
 	{	EntityTransaction tx = threadTransaction.get();
 		try 
-		{	if ( tx != null && tx.isActive())
+		{	if ( tx != null && tx.isActive() && numTxs == 1)
 			{	tx.commit();
+				numTxs -= 1;
 				//System.out.println("Comitou transacao");
+			}
+			else{
+				numTxs -= 1;
 			}
 			threadTransaction.set(null);
 		} 
